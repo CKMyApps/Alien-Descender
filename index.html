@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111817">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
+<title>Alien Descender · CK My Apps</title>
+<style>
+:root{color-scheme:dark;--bg:#111817;--panel:#192421;--border:#394943;--muted:#b0bcb5;--light:#edf2e9;--accent:#d3f793}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0,#23342b,transparent 68%),var(--bg);color:var(--light);font:15px system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.mono,.eyebrow,.hud,button,.footer{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.shell{width:min(1050px,calc(100% - 48px));margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--border);padding:19px 0}
+.brand,.eyebrow{font-size:.73rem;letter-spacing:.17em;text-transform:uppercase;font-weight:700}
+.brand::before,.dot{content:"";display:inline-block;width:8px;height:8px;background:var(--accent);margin-right:9px;vertical-align:1px}
+header .mono{font-size:.7rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;text-align:right}
+.hero{padding:28px 0 23px}
+.eyebrow{margin:0;color:var(--accent)}
+h1{margin:6px 0 5px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:clamp(2.25rem,7vw,5.4rem);line-height:.97;letter-spacing:-.095em;text-transform:uppercase}
+.hero p:last-child{margin:12px 0 0;color:var(--muted)}
+.cabinet{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start}
+.machine,.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px}
+.machine{padding:12px;box-shadow:0 16px 44px #0004}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:1px 2px 11px;font-size:.72rem;letter-spacing:.06em;color:var(--muted)}
+.hud strong{color:var(--light);margin-left:4px;font-size:.9rem}
+.screen{position:relative;aspect-ratio:8/5;overflow:hidden;background:#111;border:1px solid #53625a;border-radius:7px;isolation:isolate}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.screen::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,#0000 0 3px,#0002 3px 4px);z-index:1}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding:10px;background:#10181759;z-index:2}
+.overlay[hidden]{display:none}
+.overlay-card{width:min(310px,100%);background:#141f1deF;border:1px solid #738274;border-radius:6px;text-align:center;padding:17px 12px;box-shadow:0 6px 22px #0006}
+.overlay h2{font:700 clamp(1.28rem,4vw,2.1rem)/1 ui-monospace,monospace;letter-spacing:-.07em;text-transform:uppercase;margin:7px 0}
+.overlay p:not(.eyebrow){color:#d0dbd1;margin:9px 0 13px;font-size:.84rem}
+.primary{border:1px solid var(--accent);border-radius:4px;background:var(--accent);color:#151d14;font-weight:800;padding:8px 15px;text-transform:uppercase;letter-spacing:.045em;font-size:.82rem}
+.primary:hover{background:#e4ffbb}
+.toolbar{display:flex;justify-content:space-between;gap:6px;align-items:center;padding-top:11px}
+.toolbar p{margin:0;color:var(--muted);font-size:.68rem;letter-spacing:.07em;text-transform:uppercase}
+.aux,.control{border:1px solid #56675e;background:#22302a;border-radius:5px;padding:6px 9px;font-size:.74rem}
+.aux:hover,.control:hover,.control.active{background:#34473c}
+.aux:disabled,.control:disabled{opacity:.48;cursor:default}
+.side{display:grid;gap:12px}
+.panel{padding:14px}
+.panel h2{font-size:.75rem;margin:0 0 10px;letter-spacing:.13em;text-transform:uppercase}
+.panel p{font-size:.8rem;line-height:1.5;margin:0;color:var(--muted)}
+.control-list{display:grid;gap:7px;margin:0}
+.control-list div{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.control-list dt{color:var(--muted);font-size:.78rem}
+.control-list dd{margin:0;white-space:nowrap}
+kbd{display:inline-block;border:1px solid #58695e;background:#111a16;border-radius:3px;padding:2px 5px;min-width:21px;text-align:center;font-size:.72rem}
+.touch{display:none;grid-template-columns:1fr 1fr 1.35fr;gap:7px;margin-top:10px}
+.control{min-height:44px;touch-action:none;font-weight:800}
+.footer{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--border);margin:18px 0 0;padding:12px 0 18px;color:var(--muted);font-size:.67rem;line-height:1.5}
+@media(max-width:760px){.shell{width:calc(100% - 28px)}.cabinet{grid-template-columns:1fr}.side{grid-template-columns:1fr 1fr}.hero{padding:19px 0 16px}.touch{display:grid}}
+@media(pointer:coarse){.touch{display:grid}}
+@media(max-width:375px){.hud{font-size:.61rem}.hud strong{font-size:.72rem}.machine{padding:8px}.hero p:last-child{font-size:.84rem}.overlay-card{padding:12px 8px}.panel{padding:9px}}
+#buy-game { display: inline-flex; align-items: center; min-height: 36px; margin-inline: 8px; color: inherit; font-weight: 700; text-underline-offset: 3px; }
+#buy-game[hidden] { display: none; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header><span class="brand mono">CK My Apps</span><span class="mono">Retro Arcade / 01</span></header>
+  <section class="hero" aria-labelledby="title">
+    <h1 id="title">Alien Descender</h1>
+    <p>One survivor. A narrowing gorge. How far can you descend?</p>
+  </section>
+  <main class="cabinet" aria-label="Alien Descender game">
+    <section class="machine" aria-label="Game console">
+      <div class="hud"><span>DEPTH <strong id="score">0000</strong></span><span>BEST <strong id="best">0000</strong></span></div>
+      <div class="screen">
+        <canvas id="field" width="256" height="160" tabindex="-1" role="img" aria-label="An alien descends into an underwater gorge"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="overlay-card">
+            <p class="eyebrow" id="status" role="status">Pacific Ocean</p>
+            <h2 id="overlay-title">Ready to dive?</h2>
+            <p id="overlay-text">Dodge the walls and fire down at the bombs.</p>
+            <button class="primary" id="play" type="button">Start dive</button>
+            <a id="buy-game" href="https://ckmyapps.itch.io/alien-descender" target="_blank" rel="noopener">Buy the game</a>
+          </div>
+        </div>
+      </div>
+      <div class="touch" aria-label="Touch controls">
+        <button class="control" data-control="left" aria-label="Move left" type="button" disabled>◀</button>
+        <button class="control" data-control="right" aria-label="Move right" type="button" disabled>▶</button>
+        <button class="control" data-control="fire" type="button" disabled>FIRE</button>
+      </div>
+      <div class="toolbar"><p><span class="dot"></span><span id="run-state">Standby</span></p><div>
+        <button class="aux" id="pause" type="button" disabled>Pause</button>
+        <button class="aux" id="sound" type="button" aria-pressed="false">Sound off</button>
+      </div></div>
+    </section>
+    <aside class="side" aria-label="Controls and briefing">
+        <section class="panel"><h2 class="mono">Controls</h2>
+        <dl class="control-list">
+          <div><dt>Move left</dt><dd><kbd>←</kbd> <kbd>5</kbd></dd></div>
+          <div><dt>Move right</dt><dd><kbd>→</kbd> <kbd>8</kbd></dd></div>
+          <div><dt>Fire down</dt><dd><kbd>Space</kbd> <kbd>6</kbd></dd></div>
+          <div><dt>Pause / resume</dt><dd><kbd>P</kbd> <kbd>Esc</kbd></dd></div>
+        </dl>
+      </section>
+      <section class="panel"><h2 class="mono">Dive briefing</h2><p>A single hit ends the dive. Fire straight down to destroy bombs and depth charges before you reach them. Each row you survive adds one point.</p></section>
+    </aside>
+  </main>
+  <footer class="footer"><span>Inspired by S. Robert Speel’s original Sinclair BASIC game.</span><span>CK MY APPS</span></footer>
+</div>
+<script>
+"use strict";
+
+const $ = (selector) => document.querySelector(selector);
+const canvas = $("#field");
+const ctx = canvas.getContext("2d");
+const cells = 32;
+const rowsVisible = 20;
+const craftRow = 2;
+const shotWidth = 6;
+const palette = {sea:"#f5f5f5", edge:"#9c9c9c", ink:"#151515", bomb:"#191919", charge:"#191919", shot:"#111111"};
+const sprites = {
+  alien: ["....####........####....","......############......","##....############....##","###..###..####..###..###","########################","..####################..","....#####.####.#####....","......###......###......",".....####......####....."],
+  bomb: ["...##...","...##...","..####..",".##.###.","..####..",".##..##.","...##...","..#..#.."],
+  charge: ["......####......","....########....","..############..","################",".##############.","...##########...",".....######....."]
+};
+
+const controlKeys = new Map([["ArrowLeft","left"],["5","left"],["ArrowRight","right"],["8","right"],[" ","fire"],["6","fire"]]);
+const activeKeys = new Set();
+const heldPointers = new Map();
+const pending = {move:null,fire:false};
+const touchButtons = [...document.querySelectorAll(".control")];
+const noTone = !window.AudioContext && !window.webkitAudioContext;
+const clock = {next:0, shotUntil:0, shotEnd:0};
+let sound = !noTone && readSetting("sound") === "on";
+let audio;
+let state = "ready";
+let rows = [];
+let depth = 0;
+let x = 14;
+let left = 10;
+let width = 12;
+let corridorDirection = 1;
+let bombTrail = null;
+let reachable = new Set();
+let turnUntil = 0;
+let turnDirection = 0;
+let hitReason = "";
+let best = Number(readSetting("best.mono")) || 0;
+
+function readSetting(key) {
+  try { return localStorage.getItem("alien-descender." + key); } catch { return null; }
+}
+function saveSetting(key,value) {
+  try { localStorage.setItem("alien-descender." + key,String(value)); } catch {}
+}
+function tone(kind) {
+  if (!sound) return;
+  try {
+    audio ??= new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume().catch(() => {});
+    if (audio.state !== "running") return;
+    const t = audio.currentTime;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    const duration = kind === "crash" ? .28 : .09;
+    osc.type = "square";
+    osc.frequency.setValueAtTime(kind === "crash" ? 150 : 670,t);
+    osc.frequency.exponentialRampToValueAtTime(kind === "crash" ? 37 : 145,t + duration);
+    gain.gain.setValueAtTime(.05,t);
+    gain.gain.exponentialRampToValueAtTime(.001,t + duration);
+    osc.connect(gain).connect(audio.destination);
+    osc.start(t);
+    osc.stop(t + duration);
+  } catch {}
+}
+function newField() {
+  reachable = new Set(Array.from({length:width-3},(_,i) => left+i));
+  rows = Array.from({length:rowsVisible},(_,i) => {
+    const opening = Math.max(0,6-i);
+    return {left:left-opening,right:left+width+opening, obstacle:null};
+  });
+}
+function restart() {
+  depth = 0;
+  x = 14;
+  left = 10;
+  width = 12;
+  corridorDirection = 1;
+  turnUntil = 0;
+  turnDirection = 0;
+  hitReason = "";
+  bombTrail = null;
+  clock.shotUntil = 0;
+  clearControls();
+  newField();
+  startClock();
+  tone("fire");
+}
+function stepDuration() {
+  const base = 415;
+  return Math.max(base - 105,base - Math.floor(depth / 30)*10);
+}
+function startClock() {
+  state = "running";
+  clock.next = performance.now()+stepDuration();
+  updateUI();
+  canvas.focus({preventScroll:true});
+}
+function pauseGame() {
+  clearControls();
+  state = "paused";
+  updateUI();
+}
+function togglePause() {
+  if (state === "running") pauseGame();
+  else if (state === "paused") startClock();
+}
+function finish(reason) {
+  hitReason = reason;
+  state = "over";
+  clearControls();
+  tone("crash");
+  updateUI();
+}
+function clearControls() {
+  activeKeys.clear();
+  heldPointers.clear();
+  pending.move = null;
+  pending.fire = false;
+  updateTouch();
+}
+function updateTouch() {
+  for (const button of touchButtons) {
+    button.classList.toggle("active",[...heldPointers.values()].includes(button.dataset.control));
+  }
+}
+function held(action) {
+  return [...activeKeys].some((key) => controlKeys.get(key) === action)
+    || [...heldPointers.values()].includes(action);
+}
+function queueAction(action) {
+  if (action === "fire") pending.fire = true;
+  else pending.move = action;
+}
+function randomInt(min,max) {
+  return min + Math.floor(Math.random()*(max-min+1));
+}
+function nextRow() {
+  const narrows = depth >= 15 && depth % 33 === 0 && width > 6;
+  if (narrows) width--;
+  else if (depth >= 15 && Math.random() < .63) {
+    if (Math.random() < .25) corridorDirection *= -1;
+    if (left <= 3 || left+width >= cells-3) corridorDirection = left <= 3 ? 1 : -1;
+    left += corridorDirection;
+  }
+  const row = {left,right:left+width,obstacle:null};
+  if (depth < 12) return row;
+  if (bombTrail && bombTrail.remaining === 0) bombTrail = null;
+  if (!bombTrail && Math.random() < .10) {
+    bombTrail = {remaining:randomInt(2,4), offset:Math.random()<.5 ? 0 : width-1};
+  }
+  if (bombTrail) {
+    row.obstacle = {kind:"bomb", x:left+(bombTrail.offset === 0 ? 0 : width-1), size:1};
+    bombTrail.remaining--;
+  } else if (Math.random() < 1/width) {
+    const offset = randomInt(0,width-2);
+    row.obstacle = {kind:"charge", x:left+offset, size:2};
+  }
+  // Keep at least one path reachable from the previous generated row.
+  let nextReachable = reachablePositions(row);
+  if (!nextReachable.size) {
+    row.obstacle = null;
+    nextReachable = reachablePositions(row);
+  }
+  reachable = nextReachable;
+  return row;
+}
+function canDestroy(target,position) {
+  const center = (position+2)*8;
+  return target && center-shotWidth/2 < (target.x+target.size)*8
+    && center+shotWidth/2 > target.x*8;
+}
+function fireDown(now) {
+  clock.shotUntil = now+140;
+  clock.shotEnd = canvas.height;
+  tone("fire");
+  const center = x+2;
+  for (let index=craftRow;index<rows.length;index++) {
+    const row = rows[index];
+    if (center <= row.left || center >= row.right) {
+      clock.shotEnd = index*8;
+      break;
+    }
+    if (canDestroy(row.obstacle,x)) {
+      row.obstacle = null;
+      clock.shotEnd = (index+1)*8;
+      break;
+    }
+  }
+}
+function overlaps(target,position) {
+  return target && position < target.x+target.size && position+4 > target.x;
+}
+function reachablePositions(row) {
+  const positions = new Set();
+  for (const previous of reachable) {
+    for (let position=previous-1;position<=previous+1;position++) {
+      if (position < row.left || position+4 > row.right) continue;
+      if (!overlaps(row.obstacle,position) || canDestroy(row.obstacle,position)) positions.add(position);
+    }
+  }
+  return positions;
+}
+function step(now) {
+  const leftHeld = held("left");
+  const rightHeld = held("right");
+  const move = pending.move ?? (leftHeld === rightHeld ? null : leftHeld ? "left" : "right");
+  const fire = pending.fire || held("fire");
+  pending.move = null;
+  pending.fire = false;
+
+  if (move) {
+    turnDirection = move === "left" ? -1 : 1;
+    x = Math.min(cells-4,Math.max(0,x+turnDirection));
+    turnUntil = now+155;
+  }
+  rows.shift();
+  rows.push(nextRow());
+
+  const row = rows[craftRow];
+  if (x < row.left || x+4 > row.right) {
+    finish("You hit the canyon wall.");
+    return;
+  }
+  if (fire) fireDown(now);
+  if (overlaps(row.obstacle,x)) {
+    finish(row.obstacle.kind === "bomb" ? "You hit a bomb." : "You hit a depth charge.");
+    return;
+  }
+  depth++;
+  if (depth > best) {
+    best = depth;
+    saveSetting("best.mono",best);
+  }
+  updateScore();
+}
+function pixelSprite(pattern,px,py,color) {
+  ctx.fillStyle = color;
+  pattern.forEach((line,y) => {
+    for (let col=0;col<line.length;col++) {
+      if (line[col] === "#") ctx.fillRect(px+col,py+y,1,1);
+    }
+  });
+}
+function render(now) {
+  ctx.fillStyle = palette.sea;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  for (let i=0;i<rows.length;i++) {
+    const row = rows[i];
+    const y = i*8;
+    const l = row.left*8;
+    const r = row.right*8;
+    ctx.fillStyle = palette.edge;
+    ctx.fillRect(l-5,y,5,8);
+    ctx.fillRect(r,y,5,8);
+    for (let p=0;p<8;p+=2) {
+      ctx.fillRect(l,y+p,1+(i+p)%3,1);
+      ctx.fillRect(r-1-(i+p)%2,y+p,1+(i+p)%2,1);
+    }
+    if (row.obstacle) {
+      const {kind,x:obstacleX} = row.obstacle;
+      pixelSprite(sprites[kind],obstacleX*8,y,palette[kind]);
+    }
+  }
+  if (state === "ready") {
+    pixelSprite(sprites.charge,19*8,10*8,palette.charge);
+    pixelSprite(sprites.bomb,11*8,13*8,palette.bomb);
+    pixelSprite(sprites.bomb,18*8,16*8,palette.bomb);
+  }
+  if (state !== "over" || Math.floor(now/125)%2 === 0) {
+    const craftY = craftRow*8-9;
+    pixelSprite(sprites.alien,x*8+4,craftY,palette.ink);
+    if (state === "running" && now<turnUntil) {
+      ctx.fillStyle = palette.ink;
+      ctx.fillRect(x*8+(turnDirection<0 ? 6 : 24),craftY-2,2,4);
+    }
+  }
+  if (state === "running" && now < clock.shotUntil) {
+    ctx.fillStyle = palette.shot;
+    const start = craftRow*8;
+    const length = clock.shotEnd-start;
+    ctx.fillRect((x+2)*8-shotWidth/2,start,shotWidth,Math.min(7,length));
+    ctx.fillRect((x+2)*8-1,start,2,length);
+  }
+}
+function updateScore() {
+  $("#score").textContent = String(depth).padStart(4,"0");
+  $("#best").textContent = String(best).padStart(4,"0");
+}
+function updateUI() {
+  $("#sound").setAttribute("aria-pressed",String(sound));
+  $("#sound").textContent = sound ? "Sound on" : "Sound off";
+  $("#sound").disabled = noTone;
+  const running = state === "running";
+  const paused = state === "paused";
+  $("#pause").disabled = !running && !paused;
+  $("#pause").textContent = paused ? "Resume" : "Pause";
+  touchButtons.forEach((button) => { button.disabled = !running; });
+  $("#overlay").hidden = running;
+  $("#buy-game").hidden = state !== "ready" && state !== "over";
+  const messages = {
+    ready:["Pacific Ocean","Ready to dive?","Dodge the walls and fire down at the bombs.","Start dive","Standby"],
+    running:["","","","","Descending"],
+    paused:["Dive suspended","Paused","Take a breath before you descend further.","Resume dive","Paused"],
+    over:["Dive ended","Game over",hitReason+" Depth reached: "+depth+".","Dive again","Dive ended"]
+  };
+  const [status,title,description,action,label] = messages[state];
+  $("#status").textContent = status;
+  $("#overlay-title").textContent = title;
+  $("#overlay-text").textContent = description;
+  $("#play").textContent = action;
+  $("#run-state").textContent = label;
+  updateScore();
+}
+function play() {
+  if (state === "paused") startClock();
+  else if (state !== "running") restart();
+}
+
+$("#play").addEventListener("click",play);
+$("#pause").addEventListener("click",togglePause);
+$("#sound").addEventListener("click",() => {
+  sound = !sound;
+  saveSetting("sound",sound ? "on" : "off");
+  if (sound) tone("fire");
+  updateUI();
+  if (state === "running") canvas.focus({preventScroll:true});
+});
+window.addEventListener("keydown",(event) => {
+  if (event.altKey || event.metaKey || event.ctrlKey) return;
+  const key = event.key;
+  if (key === "Enter" && !event.repeat && state !== "running" && !event.target.closest("button, a")) {
+    event.preventDefault();
+    play();
+    return;
+  }
+  if ((key === "Escape" || key.toLowerCase() === "p") && !event.repeat) {
+    event.preventDefault();
+    togglePause();
+    return;
+  }
+  const action = controlKeys.get(key);
+  if (!action || state !== "running" || (key === " " && event.target instanceof HTMLButtonElement)) return;
+  event.preventDefault();
+  if (!activeKeys.has(key)) queueAction(action);
+  activeKeys.add(key);
+});
+window.addEventListener("keyup",(event) => activeKeys.delete(event.key));
+window.addEventListener("blur",() => { if (state === "running") pauseGame(); });
+document.addEventListener("visibilitychange",() => { if (document.hidden && state === "running") pauseGame(); });
+
+touchButtons.forEach((button) => {
+  button.addEventListener("pointerdown",(event) => {
+    if (state !== "running" || event.button !== 0) return;
+    event.preventDefault();
+    button.setPointerCapture(event.pointerId);
+    heldPointers.set(event.pointerId,button.dataset.control);
+    queueAction(button.dataset.control);
+    updateTouch();
+  });
+  for (const type of ["pointerup","pointercancel","lostpointercapture"]) {
+    button.addEventListener(type,(event) => {
+      heldPointers.delete(event.pointerId);
+      updateTouch();
+    });
+  }
+});
+function frame(now) {
+  if (state === "running" && now >= clock.next) {
+    step(now);
+    clock.next = now+stepDuration();
+  }
+  render(now);
+  requestAnimationFrame(frame);
+}
+newField();
+updateUI();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
